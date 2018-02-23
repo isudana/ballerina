@@ -216,14 +216,20 @@ public abstract class AbstractHTTPAction extends AbstractNativeAction {
     private void send(Context context, HTTPCarbonMessage outboundRequestMsg,
                       HTTPClientConnectorListener httpClientConnectorLister) throws Exception {
         BConnector bConnector = (BConnector) getRefArgument(context, 0);
-        HttpClientConnector clientConnector =
-                (HttpClientConnector) bConnector.getnativeData(HttpConstants.CONNECTOR_NAME);
         String contentType = getContentType(outboundRequestMsg);
         String boundaryString = null;
         if (contentType != null && contentType.startsWith(MULTIPART_AS_PRIMARY_TYPE)) {
             boundaryString = MimeUtil.getNewMultipartDelimiter();
             outboundRequestMsg.setHeader(CONTENT_TYPE, contentType + "; " + BOUNDARY + "=" + boundaryString);
         }
+
+        HttpClientConnector clientConnector =
+                (HttpClientConnector) bConnector.getnativeData(HttpConstants.CONNECTOR_NAME);
+        if (clientConnector == null) {
+            clientConnector =
+                    (HttpClientConnector) bConnector.getnativeData(HttpConstants.HTTP2_CONNECTOR_NAME);
+        }
+
         HttpResponseFuture future = clientConnector.send(outboundRequestMsg);
         future.setHttpConnectorListener(httpClientConnectorLister);
 
