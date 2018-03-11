@@ -30,6 +30,7 @@ import org.ballerinalang.net.http.HttpUtil;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.transport.http.netty.contract.ClientConnectorException;
 import org.wso2.transport.http.netty.contract.HttpClientConnector;
 import org.wso2.transport.http.netty.contract.HttpClientConnectorListener;
 import org.wso2.transport.http.netty.message.HTTPCarbonMessage;
@@ -97,6 +98,18 @@ public class GetPromisedResponse extends AbstractHTTPAction {
         @Override
         public void onPushResponse(int promisedId, HTTPCarbonMessage httpCarbonMessage) {
             ballerinaFuture.notifyReply(createInResponseStruct(this.context, httpCarbonMessage));
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            BStruct httpConnectorError = createStruct(context, HttpConstants.HTTP_CONNECTOR_ERROR, HttpConstants
+                    .PROTOCOL_PACKAGE_HTTP);
+            httpConnectorError.setStringField(0, throwable.getMessage());
+            if (throwable instanceof ClientConnectorException) {
+                ClientConnectorException clientConnectorException = (ClientConnectorException) throwable;
+                httpConnectorError.setIntField(0, clientConnectorException.getHttpStatusCode());
+            }
+            ballerinaFuture.notifyReply(null, httpConnectorError);
         }
     }
 }
