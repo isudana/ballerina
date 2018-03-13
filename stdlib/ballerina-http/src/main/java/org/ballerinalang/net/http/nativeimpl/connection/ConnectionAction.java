@@ -117,9 +117,10 @@ public abstract class ConnectionAction extends AbstractNativeFunction {
         } catch (InterruptedException e) {
             throw new BallerinaException("interrupted sync: " + e.getMessage());
         }
-        if (outboundResponseStatusFuture.getStatus().getCause() != null) {
-            return this.getBValues(HttpUtil.getServerConnectorError(context
-                    , outboundResponseStatusFuture.getStatus().getCause()));
+        Throwable cause = outboundResponseStatusFuture.getStatus().getCause();
+        if (cause != null) {
+            outboundResponseStatusFuture.resetStatus();
+            return this.getBValues(HttpUtil.getServerConnectorError(context, cause));
         }
         return AbstractNativeFunction.VOID_RETURN;
     }
